@@ -1,8 +1,12 @@
 package com.example
 
+import com.example.main.kotlin.br.com.authKtor.authController
 import com.example.main.kotlin.br.com.authKtor.configuration.DataSource
 import com.example.main.kotlin.br.com.authKtor.configuration.RedisConfiguration
 import com.example.main.kotlin.br.com.authKtor.exception.NotFoundException
+import com.example.main.kotlin.br.com.authKtor.extension.AUTHENTICATION_PROVIDER
+import com.example.main.kotlin.br.com.authKtor.extension.roleAllowed
+import com.example.main.kotlin.br.com.authKtor.model.RoleType
 import com.example.main.kotlin.br.com.authKtor.model.UserCredential
 import com.example.main.kotlin.br.com.authKtor.service.AuthService
 import io.ktor.application.*
@@ -21,7 +25,7 @@ fun main(args: Array<String>) {
         DataSource()
         RedisConfiguration.connect()
         install(Authentication) {
-            form("login") {
+            form(AUTHENTICATION_PROVIDER) {
                 userParamName = "username"
                 skipWhen { call -> call.sessions.get<UserCredential>() != null }
 
@@ -50,20 +54,13 @@ fun main(args: Array<String>) {
         }
 
         routing {
-            authenticate("login") {
+            roleAllowed(RoleType.SUPER_ADMIN) {
                 get("/") {
                     call.respondText("Hello, world!", ContentType.Text.Html)
                 }
             }
 
-            route("/login") {
-                authenticate("login") {
-                    post {
-                        call.sessions.set(call.principal<UserCredential>())
-                        call.respondRedirect("/", permanent = false)
-                    }
-                }
-            }
+            authController()
         }
     }
     server.start(wait = true)
