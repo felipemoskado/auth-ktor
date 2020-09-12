@@ -21,7 +21,3 @@ suspend fun PipelineContext<Unit, ApplicationCall>.loginAction() {
     call.sessions.set(call.principal<UserCredential>())
     call.respond("Authenticated.")
 }
-
-suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationCall>.receiveModel() {
-    println(call.receive<T>())
-}

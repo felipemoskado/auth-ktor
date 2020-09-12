@@ -75,12 +75,7 @@ fun main(args: Array<String>) {
         }
 
         routing {
-            roleAllowed(RoleType.SUPER_ADMIN) {
-                get("/") {
-                    call.respondText("Hello, world!", ContentType.Text.Html)
-                }
-            }
-
+            userController()
             authController()
         }
     }
