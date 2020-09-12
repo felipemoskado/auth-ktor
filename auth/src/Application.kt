@@ -3,6 +3,7 @@ package com.example
 import com.example.main.kotlin.br.com.authKtor.configuration.DataSource
 import com.example.main.kotlin.br.com.authKtor.configuration.RedisConfiguration
 import com.example.main.kotlin.br.com.authKtor.controller.authController
+import com.example.main.kotlin.br.com.authKtor.controller.roleController
 import com.example.main.kotlin.br.com.authKtor.controller.userController
 import com.example.main.kotlin.br.com.authKtor.exception.NotFoundException
 import com.example.main.kotlin.br.com.authKtor.extension.AUTHENTICATION_PROVIDER
@@ -75,6 +76,7 @@ fun main(args: Array<String>) {
         }
 
         routing {
+            roleController()
             userController()
             authController()
         }
