@@ -1,6 +1,6 @@
 package com.example.main.kotlin.br.com.authKtor.extension
 
-import com.example.main.kotlin.br.com.authKtor.exception.AuthenticationException
+import com.example.main.kotlin.br.com.authKtor.exception.PermissionDeniedException
 import com.example.main.kotlin.br.com.authKtor.exception.UnauthorizedException
 import com.example.main.kotlin.br.com.authKtor.model.RoleType
 import com.example.main.kotlin.br.com.authKtor.model.UserCredential
@@ -14,7 +14,7 @@ import io.ktor.util.pipeline.*
 
 const val AUTHENTICATION_PROVIDER = "login"
 
-fun Routing.roleAllowed(role: RoleType, route: Route.() -> Unit) {
+fun Route.roleAllowed(role: RoleType, route: Route.() -> Unit) {
     authenticate(AUTHENTICATION_PROVIDER) {
         checkRole(role)
         route(this)
@@ -23,21 +23,28 @@ fun Routing.roleAllowed(role: RoleType, route: Route.() -> Unit) {
 
 private fun Route.checkRole(role: RoleType) {
     val checkRole = PipelinePhase("checkRole")
-    insertPhaseBefore(ApplicationCallPipeline.Features, checkRole)
+    insertPhaseBefore(ApplicationCallPipeline.Call, checkRole)
     intercept(checkRole) {
         val user = call.sessions.get<UserCredential>()
 
         try {
             user.optional(
-                caseNone = { throw AuthenticationException("Required authentication.") },
                 caseSome = {
-                    if (it.role.level < role.level)
-                        throw UnauthorizedException("Permission Denied.")
+                    if (it.role.level < role.level) {
+                        println("Permission Denied.")
+                        throw PermissionDeniedException("Permission Denied.")
+                    }
+                },
+                caseNone = {
+                    println("Required authentication.")
+                    throw UnauthorizedException("Required authentication.")
                 }
             )
-        } catch (ex: AuthenticationException) {
+        } catch (ex: PermissionDeniedException) {
+            finish()
             call.respond(HttpStatusCode.Unauthorized, ex.message)
         } catch (ex: UnauthorizedException) {
+            finish()
             call.respond(HttpStatusCode.Forbidden, ex.message)
         }
     }
