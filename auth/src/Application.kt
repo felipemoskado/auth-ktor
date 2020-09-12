@@ -1,24 +1,43 @@
 package com.example
 
-import com.example.main.kotlin.br.com.authKtor.authController
 import com.example.main.kotlin.br.com.authKtor.configuration.DataSource
 import com.example.main.kotlin.br.com.authKtor.configuration.RedisConfiguration
+import com.example.main.kotlin.br.com.authKtor.controller.authController
+import com.example.main.kotlin.br.com.authKtor.controller.userController
 import com.example.main.kotlin.br.com.authKtor.exception.NotFoundException
 import com.example.main.kotlin.br.com.authKtor.extension.AUTHENTICATION_PROVIDER
-import com.example.main.kotlin.br.com.authKtor.extension.roleAllowed
-import com.example.main.kotlin.br.com.authKtor.model.RoleType
 import com.example.main.kotlin.br.com.authKtor.model.UserCredential
 import com.example.main.kotlin.br.com.authKtor.service.AuthService
+import com.google.gson.*
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
 import io.ktor.gson.*
 import io.ktor.http.*
-import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.sessions.*
+import io.ktor.util.*
+import java.lang.reflect.Type
+
+class ParametersSerializer : JsonDeserializer<Any>, JsonSerializer<Any> {
+
+    @InternalAPI
+    override fun deserialize(
+        jsonElement: JsonElement,
+        type: Type,
+        jsonDeserializationContext: JsonDeserializationContext
+    ): Any =
+        jsonDeserializationContext.deserialize(jsonElement.asJsonObject, ParametersImpl::class.java)
+
+    override fun serialize(
+        jsonElement: Any,
+        type: Type,
+        jsonSerializationContext: JsonSerializationContext
+    ): JsonElement =
+        JsonObject()
+}
 
 fun main(args: Array<String>) {
     val server = embeddedServer(Netty, 8080) {
@@ -44,6 +63,8 @@ fun main(args: Array<String>) {
         install(ContentNegotiation) {
             gson {
                 serializeNulls()
+                setPrettyPrinting()
+                registerTypeAdapter(Parameters::class.java, ParametersSerializer())
             }
         }
 
