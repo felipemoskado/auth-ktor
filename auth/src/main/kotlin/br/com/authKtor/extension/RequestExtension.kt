@@ -4,9 +4,12 @@ import com.example.main.kotlin.br.com.authKtor.exception.PermissionDeniedExcepti
 import com.example.main.kotlin.br.com.authKtor.exception.UnauthorizedException
 import com.example.main.kotlin.br.com.authKtor.model.RoleType
 import com.example.main.kotlin.br.com.authKtor.model.UserCredential
+import com.example.main.kotlin.br.com.authKtor.model.entry.EntryModel
+import com.example.main.kotlin.br.com.authKtor.utils.toJson
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
+import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
@@ -46,6 +49,24 @@ private fun Route.checkRole(role: RoleType) {
         } catch (ex: UnauthorizedException) {
             finish()
             call.respond(HttpStatusCode.Forbidden, ex.message)
+        }
+    }
+}
+
+suspend inline fun <reified ENTRY : EntryModel> PipelineContext<Unit, ApplicationCall>.receiveBodyModel(block: (ENTRY) -> Any?) {
+    try {
+        val payload = call.receive<ENTRY>()
+        block(payload)
+    } catch (t: Throwable) {
+        t
+    }.let { result ->
+        when (result) {
+            null, Unit ->
+                call.respond(HttpStatusCode.Created, "OK")
+            is UnauthorizedException ->
+                call.respond(HttpStatusCode.Unauthorized, result.message)
+            else ->
+                call.respond(HttpStatusCode.OK, result.toJson())
         }
     }
 }
