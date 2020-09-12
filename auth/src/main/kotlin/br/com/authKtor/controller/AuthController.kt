@@ -1,8 +1,9 @@
-package com.example.main.kotlin.br.com.authKtor
+package com.example.main.kotlin.br.com.authKtor.controller
 
 import com.example.main.kotlin.br.com.authKtor.model.UserCredential
 import io.ktor.application.*
 import io.ktor.auth.*
+import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
@@ -16,7 +17,11 @@ fun Route.authController() {
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.loginAction() = run {
+suspend fun PipelineContext<Unit, ApplicationCall>.loginAction() {
     call.sessions.set(call.principal<UserCredential>())
     call.respond("Authenticated.")
+}
+
+suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationCall>.receiveModel() {
+    println(call.receive<T>())
 }
